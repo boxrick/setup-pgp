@@ -1,0 +1,34 @@
+---
+# module: setup-pgp/tasks/install
+# description: Install our required packages for setup-pgp
+
+- name: Install all required packages - ( Ubuntu )
+  package:
+    name: "{{ packages }}"
+    state: latest
+  when: ansible_os_family | lower == 'debian'
+
+- name: Install all required packages - ( OSX )
+  package:
+    name: "{{ packages }}"
+    state: latest
+  when: ansible_os_family | lower == 'darwin'
+
+# - name: Alias GPG2 to GPG for users, this is to prevent gpg1 being used by mistake - ( Ubuntu )
+#   file:
+#     src: /usr/bin/gpg2
+#     dest: /usr/local/bin/gpg
+#     state: link
+#   when: ansible_os_family | lower == 'debian'
+
+- name: Check if private key is present
+  set_fact:
+    private_key_present: true
+  with_fileglob: "*.key"
+
+- name: List private keys and load this in to a variable for later usage
+  command: "{{ shell_out_command }} '{{ gpg_command }} --list-secret-keys'"
+  args:
+    warn: false
+  changed_when: false
+  register: gpg_private_keys

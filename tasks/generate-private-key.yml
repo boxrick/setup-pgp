@@ -1,0 +1,33 @@
+---
+# module: setup-pgp/tasks/install
+# description: When we have not specified a private key and one is not present, we generate one based on variables or user input
+
+- name: Generate some extra entropy *DANGEROUS IN PRODUCTION SYSTEM*
+  command: 'rngd -r /dev/urandom'
+  changed_when: false
+  when: generate_fake_entropy
+
+- name: Create a template file for setting private key
+  template:
+    src: generate-key.j2
+    dest: "{{ user_path.stdout }}/generate-key"
+    owner: "{{ gpg_user }}"
+
+- name: Generate private key from template and place in temporary keyring
+  command: "{{ shell_out_command }} '{{ gpg1_command }} --no-default-keyring --keyring={{ user_path.stdout }}/.gnupg/export.keyring --batch --gen-key {{ user_path.stdout }}/generate-key'"
+  args:
+    warn: false
+
+- name: Spit out private key we have just generated from temporary keyring to ascii text file
+  shell: "{{ shell_out_command }} '{{ gpg1_command }} --no-default-keyring --keyring={{ user_path.stdout }}/.gnupg/export.keyring -a --export-secret-keys > {{ user_path.stdout }}/{{ private_key_text_path }}'"
+  args:
+    warn: false
+
+- name: Set a variable since we have generated a private key
+  set_fact:
+    private_key_generated: true
+
+- name: Clear out generate key file
+  file:
+    state: absent
+    path: "{{ user_path.stdout }}/generate-key"

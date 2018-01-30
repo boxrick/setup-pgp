@@ -1,0 +1,10 @@
+---
+# Variables for an OSX system using setup-pgp
+
+packages:                                            # Packages required
+  - gnupg2
+  - gpg1
+
+shell_out_command: "sudo -u {{ gpg_user }} bash -c" # Command we need to use to run as a specific user
+gpg_command: gpg                                    # What package do we do use for gpg2
+gpg1_command: /usr/local/bin/gpg1

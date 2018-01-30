@@ -1,0 +1,32 @@
+---
+# module: setup-pgp/tasks
+# description: Install setup-pgp onto CentOS 7 or Ubuntu 16
+
+- name: Include our operating system specific variables
+  include_vars: "{{ ansible_os_family | lower }}.yml"
+
+- name: Set up users if required
+  include_tasks: setup-user.yml
+
+- name: Install all the packages and check if any private keys present already
+  include_tasks: install.yml
+
+- name: Load in private key if file is present
+  include_tasks: copy-private-key.yml
+  when: private_key_present
+
+- name: Generate private key if none are present in role and none exist on system
+  include_tasks: generate-private-key.yml
+  when:
+    - private_key_present == false
+    - gpg_private_keys.stdout | length == 0
+
+- name: Finally configure all of our private and public keys, ie load everything in and set options
+  include_tasks: configure.yml
+
+- name: Push key upstream
+  include_tasks: push-key-upstream.yml
+  when: push_key_upstream
+
+- name: Flush handlers
+  meta: flush_handlers

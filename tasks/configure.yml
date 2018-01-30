@@ -1,0 +1,35 @@
+---
+# module: setup-pgp/tasks/install
+# description: Install our required packages for setup-pgp
+
+- name: Import generated / passed in private key if required
+  command: "{{ shell_out_command }} '{{ gpg_command }} --batch --yes --allow-secret-key-import --import {{ user_path.stdout }}/{{ private_key_text_path }}'"
+  args:
+    warn: false
+  when:
+    - gpg_private_keys.stdout | length == 0
+    - (private_key_generated) or (private_key_present)
+
+- name: Make sure default mode is trust all
+  lineinfile:
+    create: true
+    path: "{{ user_path.stdout }}/.gnupg/gpg.conf"
+    regexp: '^trust-model'
+    line: 'trust-model always'
+    mode: 0600
+    owner: "{{ gpg_user }}"
+
+- name: List all keys to see if we need to update
+  command: "{{ shell_out_command }} '{{ gpg_command }} --list-keys'"
+  args:
+    warn: false
+  changed_when: false
+  register: gpg_import_status
+
+- name: Import trusted keys from specified keyserver
+  command: "{{ shell_out_command }} '{{ gpg_command }} {{ '--keyserver-options http-proxy=' + http_proxy if http_proxy | length > 0 else '' }} --keyserver {{ trusted_keyserver }} --recv {{ item }}'"
+  args:
+    warn: false
+  when: item not in gpg_import_status.stdout
+  with_items: "{{ trusted_keys }}"
+  notify: encrypt_example

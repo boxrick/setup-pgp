@@ -1,0 +1,19 @@
+- hosts: localmachine
+  become: no
+  gather_facts: true
+  become_method: sudo
+  vars:
+    # Use Python 3 instead of 2
+    # Ansible 2.3 is broken for get_url, so instead we install Python 2.7 for this role
+    # ansible_python_interpreter: /usr/bin/python3
+    # Set up our environment proxy so we can run this role
+    # No Proxy
+    # proxy_env: {}
+    # Proxy
+    proxy_env:
+      http_proxy: "{{ lookup('env','http_proxy') }}"
+      https_proxy: "{{ lookup('env','https_proxy') }}"
+      rsync_proxy: "{{ lookup('env','rsync_proxy') }}"
+  roles:
+    - role: "{{ playbook_dir | dirname }}"
+  environment: "{{ proxy_env }}"

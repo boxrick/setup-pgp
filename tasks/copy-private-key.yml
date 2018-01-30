@@ -1,0 +1,9 @@
+---
+# module: setup-pgp/tasks/install
+# description: Install our required packages for setup-pgp
+
+- name: Copy private key to disk
+  copy:
+    src: private.key
+    dest: "{{ user_path.stdout }}/{{ private_key_text_path }}"
+    owner: "{{ gpg_user }}"

@@ -1,0 +1,47 @@
+---
+# module: setup-pgp/tasks/setup-user
+# description: Make sure the user is present before we start creating gpg user specific config
+
+- name: Get current deploy user
+  command: whoami
+  register: current_username
+  changed_when: false
+  when: gpg_user | length == 0
+
+- name: Set gpg_user if not defined to current user on remote system
+  set_fact:
+    gpg_user: "{{ current_username.stdout }}"
+  when: gpg_user | length == 0
+
+- name: Check if user exists
+  user:
+    name: "{{ gpg_user }}"
+    state: present
+  check_mode: yes
+  register: gpg_user_exists
+
+- name: If user doesn't exist then create
+  block:
+    - name: Ensure "{{ gpg_user }}" user group exists
+      group:
+        name: "{{ gpg_user }}"
+        state: present
+
+    - name: Ensure "{{ gpg_user }}" user exists
+      user:
+        name: "{{ gpg_user }}"
+        groups: "{{ gpg_user }}"
+        state: present
+  when: gpg_user_exists.changed
+
+- name: Get home folder of user
+  shell: "eval echo ~{{ gpg_user }}"
+  changed_when: false
+  register: user_path
+  
+- name: Make sure gpg directory is present for user
+  file:
+    path: "{{ user_path.stdout }}/.gnupg/"
+    state: directory
+    mode: 0700
+    owner: "{{ gpg_user }}"

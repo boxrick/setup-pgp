@@ -1,0 +1,41 @@
+---
+# name: setup-pgp/defaults
+# description: ALL our default variables for setup-pgp go in here
+#------------------------------------------------------------------------------
+# Packages - All our required packages we need installing
+#------------------------------------------------------------------------------
+
+# - pre-requisites -
+
+# * OS Specific - find in vars *
+# packages:                          # Packages required required
+#   - gnupg2
+
+gpg_user: ""                         # User to generate GPG keys for, if this isn't defined we default to current user
+trusted_keys:                        # List of trusted keys to be imported into GPG keychain, placeholder of rick.box key
+  - 41042C85
+
+# - variables -
+
+trusted_keyserver: keyserver.ubuntu.com        # What upstream keyserver do we use for private keys
+submit_keyserver: keys.gnupg.net               # What upstream server shall we submit our public keys to
+http_proxy: "{{ lookup('env','http_proxy') }}" # Proxy to pass to command for external keyserver
+push_key_upstream: false                       # Do we want to automatically push our key upstream, this only happens if one is present and it hasn't already been uploaded
+private_key_text_path: ".gnupg/private.key"    # What is the path we place our generated or loaded in private key, this will be pre-pended with user home path
+
+# Auto generating key
+
+generate_fake_entropy: false                   # do we generate fake entropy, this is a requirement on a test server where there is no real input for much entropy. Used for generating key
+key_bits: 2048                                 # Bits for key
+
+# Define some details for generating a key, if we use these then real_name and email_address are required
+real_name: ""
+email_address: ""
+passphrase: ""
+
+#### Working variables ####
+private_key_present: false
+private_key_generated: false
+set_email_address: ""
+set_passphrase: ""
+set_real_name: ""

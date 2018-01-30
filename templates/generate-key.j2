@@ -1,0 +1,8 @@
+Key-Type: 1
+Key-Length: {{ key_bits }}
+Subkey-Type: 1
+Subkey-Length: {{ key_bits }}
+Name-Real: {{ real_name }}
+Name-Email: {{ email_address }}
+Expire-Date: 0
+{% if passphrase | length > 0 %}Passphrase: {{ passphrase }}{% endif %}

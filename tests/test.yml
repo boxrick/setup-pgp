@@ -1,0 +1,42 @@
+---
+- hosts: all
+  gather_facts: false
+  become_method: sudo
+  become: yes
+  vars:
+    proxy_env:
+      http_proxy: "{{ lookup('env','http_proxy') }}"
+      https_proxy: "{{ lookup('env','https_proxy') }}"
+      rsync_proxy: "{{ lookup('env','rsync_proxy') }}"
+
+    push_key_upstream: false
+    gpg_user: ubuntu
+
+    python_install_command: "test -e /usr/bin/python || ( export http_proxy={{ proxy_env.http_proxy | default('') }} && apt -y update && apt install -y python-minimal )"
+
+  pre_tasks:
+    - name: Install python2.x for Ansible when we are not using python3
+      raw: "{{ python_install_command }}"
+      changed_when: false
+      become: yes
+      when:
+        - ansible_python_interpreter is not defined
+    - name: Gather facts
+      become: yes
+      setup:
+    - debug: msg="{{ playbook_dir | dirname }}"
+  roles:
+    - role: "{{ playbook_dir | dirname }}"
+  tasks:
+    - name: Add apt key
+      apt_key:
+        url: https://www.justwatch.com/gopass/releases/0x0C92225A97F6B666.pub
+        state: present
+    - apt_repository:
+        repo: deb https://www.justwatch.com/gopass/releases/binary-amd64 ./
+        state: present
+    - name: install the latest version of gopass
+      package:
+        name: gopass
+        state: latest
+  environment: "{{ proxy_env }}"

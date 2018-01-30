@@ -1,0 +1,24 @@
+---
+# module: setup-pgp/tasks/install
+# description: Push public key upstream
+
+- name: Get current private key ID
+  shell: "{{ shell_out_command }} '{{ gpg_command }} --list-secret-keys --with-colons | grep sec | cut -d: -f 5'"
+  args:
+    warn: false
+  register: current_private_key
+  changed_when: false
+
+- name: Check if key exists upstream
+  command: "{{ shell_out_command }} '{{ gpg_command }} --batch {{ '--keyserver-options http-proxy=' + http_proxy if http_proxy | length > 0 else '' }} --keyserver {{ trusted_keyserver }} --search-key {{ current_private_key.stdout }}'"
+  args:
+    warn: false
+  failed_when: is_key_upstream.rc not in [0,1,2]
+  register: is_key_upstream
+  changed_when: false
+
+- name: Push public key upstream
+  command: "{{ shell_out_command }} '{{ gpg_command }} {{ '--keyserver-options http-proxy=' + http_proxy if http_proxy | length > 0 else '' }} --keyserver {{ submit_keyserver }} --send-keys {{ current_private_key.stdout }}'"
+  args:
+    warn: false
+  when: current_private_key.stdout not in is_key_upstream.stderr

@@ -1,0 +1,22 @@
+---
+# name: setup-pgp/handlers
+# description: All our handlers for setup-pgp go in here
+
+- name: Copy a test file
+  copy:
+    content: 'hello'
+    dest: "/tmp/{{ gpg_user }}_filetoencrypt"
+    owner: "{{ gpg_user }}"
+  listen: encrypt_example
+
+- name: Confirm we can encrypt file to all defined users
+  shell: "{{ shell_out_command }} '{{ gpg_command }} --batch --yes --output /tmp/{{ gpg_user }}_test.gpg --encrypt --recipient {{ trusted_keys | join(' --recipient ') }} /tmp/{{ gpg_user }}_filetoencrypt'"
+  args:
+    warn: false
+  register: output_encrypt
+  listen: encrypt_example
+
+- name: Print output for example encrypt
+  debug:
+    var: output_encrypt
+  listen: encrypt_example

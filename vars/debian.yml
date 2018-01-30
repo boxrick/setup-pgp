@@ -1,0 +1,10 @@
+---
+# Variables for an Ubuntu / Debian system using setup-pgp
+
+packages:                                           # Packages required
+  - gnupg2
+  - rng-tools
+
+shell_out_command: "su {{ gpg_user }} -c"           # Command we need to use to run as a specific user
+gpg_command: gpg2                                   # What package do we do use for gpg2
+gpg1_command: /usr/bin/gpg
